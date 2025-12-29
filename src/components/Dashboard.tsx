@@ -673,7 +673,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
                       <Tooltip 
                         cursor={{fill: 'transparent'}}
                         contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }}
-                        formatter={(val: number) => formatPercent(val)}
+                        formatter={(val: number | undefined) => val !== undefined ? formatPercent(val) : 'N/A'}
                       />
                       <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
                         {performanceData.map((entry, index) => (
