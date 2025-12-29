@@ -293,7 +293,7 @@
 //                       <YAxis domain={['auto', 'auto']} stroke="#64748b" fontSize={12} tickFormatter={(val) => val.toLocaleString()} />
 //                       <Tooltip 
 //                         contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f1f5f9' }}
-//                         formatter={(value: number) => [value.toLocaleString(), 'Harga']}
+//                         formatter={(value: number | string | undefined) => [value ? value.toString() : 'N/A', 'Harga']}
 //                       />
 //                       <Line type="monotone" dataKey="close" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
 //                     </LineChart>
@@ -651,7 +651,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
                       <YAxis domain={['auto', 'auto']} stroke="#64748b" fontSize={12} tickFormatter={(val) => val.toLocaleString()} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f1f5f9' }}
-                        formatter={(value: number) => [value.toLocaleString(), 'Harga']}
+                        formatter={(value: number | string | undefined) => [value ? value.toString() : 'N/A', 'Harga']}
                       />
                       <Line type="monotone" dataKey="close" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
                     </LineChart>
@@ -717,7 +717,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
                   value={formatNumber(selectedStock.BetaOneYear)} 
                   sub="Volatilitas"
                 />
-                 <MetricCard 
+                <MetricCard 
                   label="YTD Return" 
                   value={formatPercent(selectedStock.Ytd)} 
                   color={selectedStock.Ytd >= 0 ? 'text-emerald-400' : 'text-rose-400'}
@@ -726,7 +726,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
             </div>
           </>
         ) : (
-           <div className="h-full flex flex-col items-center justify-center text-slate-500">
+          <div className="h-full flex flex-col items-center justify-center text-slate-500">
             <Activity size={64} className="mb-4 opacity-20" />
             <p className="text-xl">Pilih saham di sebelah kiri untuk melihat analisis.</p>
           </div>
