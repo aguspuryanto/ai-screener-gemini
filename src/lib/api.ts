@@ -2,17 +2,69 @@
 import { StockData, CandleData } from '@/types/stock';
 
 const API_URL = 'https://pasardana.id/api/StockSearchResult/GetAll?pageBegin=0&pageLength=1000&sortField=Code&sortOrder=ASC';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-export async function getStockList(): Promise<StockData[]> {
+// Simple in-memory cache
+let cache: {
+  data: StockData[];
+  timestamp: number;
+} | null = null;
+
+// Rate limiting
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 1000; // 1 second between requests
+
+async function fetchWithRateLimit<T>(url: string, options?: RequestInit): Promise<T> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  // Add delay if needed to respect rate limit
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+  }
+  
+  lastRequestTime = Date.now();
+  
+  const response = await fetch(url, {
+    ...options,
+    next: { revalidate: 300 }, // ISR: Revalidate every 5 minutes (300 seconds)
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API request failed with status ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+export async function getStockList(forceRefresh = false): Promise<StockData[]> {
   try {
-    const res = await fetch(API_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch');
+    const now = Date.now();
     
-    // Pasardana returnnya langsung Array atau dibungkus, kita handle aman:
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data['Result'] || []);
+    // Return cached data if it's still valid and not forcing refresh
+    if (cache && !forceRefresh && (now - cache.timestamp) < CACHE_DURATION) {
+      console.log('Returning cached stock data');
+      return cache.data;
+    }
+    
+    console.log('Fetching fresh stock data from API');
+    const data = await fetchWithRateLimit(API_URL);
+    
+    // Update cache
+    const result = Array.isArray(data) ? data : (data?.['Result'] || []);
+    cache = {
+      data: result,
+      timestamp: now
+    };
+    
+    return result;
   } catch (error) {
     console.error("API Error:", error);
+    // Return cached data if available, even if it's stale
+    if (cache?.data) {
+      console.warn('Using stale cache data due to API error');
+      return cache.data;
+    }
     return [];
   }
 }
